@@ -1,0 +1,33 @@
+
+ try{
+            Workbook workbook = WorkbookFactory.create(new File(this.fileName));
+            Iterator<Sheet> sheetIterator = workbook.sheetIterator();
+            System.out.println("Retrieving Sheets using Iterator");
+            while (sheetIterator.hasNext()) {
+                 Sheet sheet = sheetIterator.next();
+                 System.out.println("=> " + sheet.getSheetName());
+        }   
+            Sheet sheet = workbook.getSheetAt(0);
+            System.out.println("\n\nIterating over Rows and Columns using Iterator\n");
+            Iterator<Row> rowIterator = sheet.rowIterator();
+            while (rowIterator.hasNext()) {
+                  Row row = rowIterator.next();
+
+            // Now let's iterate over the columns of the current row
+                  Iterator<Cell> cellIterator = row.cellIterator();
+                  
+            while (cellIterator.hasNext()) {
+                  Cell cell = cellIterator.next();
+                  
+                  String cellValue = cell.getStringCellValue();
+                  System.out.print(cellValue + "\t");
+                  countCol++;
+            }
+            System.out.println();
+            }
+           workbook.close();
+          
+             
+        }catch(Exception e){
+            System.out.println("Open file in getRowNumber function: "+e);
+        }
