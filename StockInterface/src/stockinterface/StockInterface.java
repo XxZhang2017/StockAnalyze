@@ -10,6 +10,11 @@ import org.apache.poi.ss.usermodel.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Iterator;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 /**
 FileInputStream() work with bytes,typically used for media; FileStreamReader() work with characters
  */
@@ -23,6 +28,8 @@ public class StockInterface {
     public String fileName;  //?final
     //public InputStream input;
     float[][] num;
+    public int ReadStartRow;
+    public int ReadStartCol;
     
     public StockInterface() {
         BufferedReader bf = null; 
@@ -32,12 +39,12 @@ public class StockInterface {
                  bf = new BufferedReader(new InputStreamReader(System.in));
                  String line = bf.readLine();
                  row=Integer.parseInt(line);
-                 System.out.println(row);
+//                System.out.println(row);
                  System.out.println("Please enter the total number of columns: ");
                  bf = new BufferedReader(new InputStreamReader(System.in));
                  line = bf.readLine();
                  col=Integer.parseInt(line);
-                 System.out.println(col);
+//                System.out.println(col);
                  
                  num=new float[row][col];
                  System.out.println("Please enter your data,separate by comma:");
@@ -72,33 +79,46 @@ public class StockInterface {
         
         this.fileName=fileName;
         FileInputStream input=new FileInputStream(this.fileName);
-        SetColRowNumber();
+ //       SetColRowNumber();
         System.out.println("the row number is "+this.row+" "+" the col number is "+this.col);
         
     }
+    //set startRow number and startCol number; 
+    //count total row number;
     public int getRowNumber()throws IOException{
         int countRow=0;
-         try{
+        boolean rowFlag=false;
+        try{
             Workbook workbook = WorkbookFactory.create(new File(this.fileName));
             Sheet sheet = workbook.getSheetAt(0);
             Iterator<Row> rowIterator = sheet.rowIterator();
             while (rowIterator.hasNext()) {
-                  Row row = rowIterator.next();
-                  countRow++;
-            }           
-            System.out.println();
+                    Row row = rowIterator.next();
+                    Iterator<Cell> cellIterator=row.cellIterator();
+                    while (cellIterator.hasNext()) {
+                        if(!rowFlag){    
+                            break;
+                        }
+                            Cell cell = cellIterator.next();
+                            if((cell.getCachedFormulaResultTypeEnum()==CellType.NUMERIC)&&(!rowFlag)){
+                                ReadStartRow=cell.getRowIndex();
+                                ReadStartCol=cell.getColumnIndex();
+                                rowFlag=true;
+                                  break;
+                            } 
+                    }
+                    rowIterator.next();            
             }
            workbook.close();
-          
-             
+            
         }catch(Exception e){
             System.out.println("Open file in getRowNumber function: "+e);
         }
         return this.row=countRow;
     }
-    public void SetColRowNumber()throws IOException{
+ /*   public void getColRowNumber()throws IOException{
         int countCol=0;
-        
+       
         try{
             Workbook workbook = WorkbookFactory.create(new File(this.fileName));
             
@@ -108,12 +128,13 @@ public class StockInterface {
                   Row row = rowIterator.next();
                   // Now let's iterate over the columns of the current row
                   Iterator<Cell> cellIterator = row.cellIterator();                
-            while (cellIterator.hasNext()) {
-                  Cell cell = cellIterator.next();
-                  
+                  while (cellIterator.hasNext()) {
+                        Cell cell = cellIterator.next();
+                        if(cell)
+                            cell.get
 //                  String cellValue = cell.getStringCellValue();
 //                  System.out.print(cellValue + "\t");
-                  countCol++;
+                        countCol++;
             }
             countRow++;
             System.out.println();
@@ -126,7 +147,7 @@ public class StockInterface {
         }
         this.col=countCol;
         this.row=countRow;
-    }
+    }*/
 
     public void printNum(){
         try{
@@ -145,10 +166,28 @@ public class StockInterface {
             System.out.println("In printNum function: "+e);
         }
     }
+     public void writeToSheet()throws FileNotFoundException,IOException {
+        int loopRow, loopCol;
+        loopRow=0;
+        loopCol=0;
+        XSSFWorkbook workbook = new XSSFWorkbook(); 
+        XSSFSheet spreadsheet = workbook.createSheet("test");
+        for(loopRow=0;loopRow<4;loopRow++){
+            Row row=spreadsheet.createRow((short)loopRow);
+            for(loopCol=0;loopCol<2;loopCol++){
+                Cell cell=row.createCell((short)loopCol);
+                cell.setCellValue(num[loopRow][loopCol]);
+            }
+        }
+        FileOutputStream fileOut=new FileOutputStream("./current.xlsx");
+        workbook.write(fileOut);
+        fileOut.flush();
+        fileOut.close();
+    }
 
     public static void main(String[] args) throws IOException {
-          StockInterface st=new StockInterface("D:\\stock\\StockInterface\\src\\test.xlsx");
-          
+          StockInterface st=new StockInterface();
+          st.writeToSheet();
           
     }
     
